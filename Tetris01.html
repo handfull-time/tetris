@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>테트리스</title>
+    <!-- 
+      작성자 : utime@naver.com
+      내용 : 테트리스.
+      테트리스 보드 크기 TetrisDefine.MATRIX_XY의 크기에 테트리스 할 수 있는 보드 크기가 결정된다.
+      전체 크기는 보드 크기와 PIECE_IMG_SIZE의 크기에 비례하게 결정된다.
+      PC에서 원할하게 동작 한다.
+      
+      예전 안드로이드 프로그램에서 만들어본 소스 기반으로 Html canvas에서 동작 할 수 있도록 수정 함.
+      TetrisManager 클래스와 Canvas 그리는 소스와 분리를 목표로 삼았다.
+      워킹데이 4일 정도 소요.
+
+
+
+      작업하면서 안드로이드 소스 만들때 버그가 많은 상태라 그것 때문에 소비 시간이 늘어 났다. -_-;;; 처음부터 잘 만들껄...
+      java 클래스 소스를 javascript로 변환할 때는 gpt의 도움을 받음.
+      역시 회사 일이 안 될 땐 기분 전환 겸 이런 코딩이 많은 도움이 된다.
+    -->
+    <style>
+      canvas {
+        border: 1px solid rgb(0, 0, 0);
+      }
+    </style>
+
+    <script type="application/javascript">
+      /**
+       * 테트리스 기본 정의 값.
+       * 가로는 X 축, 세로는 Y 축 ( X, Y )
+       */
+      const TetrisDefine = {
+        // 테트리스 보드 크기
+        MATRIX_X: 18,
+        MATRIX_Y: 30,
+        // 아이템의 블럭 크기
+        PIECE_SIZE: 4,
+        // 아이템의 이미지 크기 홀수보단 짝수가...
+        PIECE_IMG_SIZE: 16,
+      };
+
+      TetrisDefine.MATRIX_BETWEEN = TetrisDefine.PIECE_SIZE - 1;
+
+      TetrisDefine.MATRIX_GAP = TetrisDefine.MATRIX_BETWEEN * 2;
+
+      TetrisDefine.MATRIX_BR_X = TetrisDefine.MATRIX_X + TetrisDefine.MATRIX_GAP;
+      TetrisDefine.MATRIX_BR_Y = TetrisDefine.MATRIX_Y + TetrisDefine.MATRIX_GAP;
+
+      TetrisDefine.MATRIX_WORK_X = TetrisDefine.MATRIX_BR_X - TetrisDefine.MATRIX_BETWEEN;
+      TetrisDefine.MATRIX_WORK_Y = TetrisDefine.MATRIX_BR_Y - TetrisDefine.MATRIX_BETWEEN;
+
+      // 객체 값 고정
+      Object.freeze(TetrisDefine);
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       *  테스리스 상태
+       */
+      const TetrisStatus = {
+        // 시작 대기 상태
+        Begin: 0,
+        // 진행 중
+        Play: 1,
+        // 게임 종료
+        Finish: 2,
+      };
+
+      // 객체 값 고정
+      Object.freeze(TetrisStatus);
+
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       * 아이템의 색깔
+       */
+      const PieceColor = {
+        PIECE_NO: -1, // 칠하지 않음
+        PIECE_BL: 0, // 검정-BLACK
+        PIECE_RD: 1, // 빨강-RED
+        PIECE_YW: 2, // 노랑-YELLOW
+        PIECE_LG: 3, // 연두-LIGHT GREEN
+        PIECE_GR: 4, // 녹색-GREEN
+        PIECE_BU: 5, // 파랑-BLUE
+        PIECE_OR: 6, // 주황-ORANGE
+        PIECE_PP: 7, // 보라-PURPLE
+        PIECE_NV: 8, // 군청-NAVY BLUE
+      };
+
+      // 객체 값 고정
+      Object.freeze(PieceColor);
+
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       * 테트리스 아이템
+       */
+      class PieceItem {
+        constructor(pieceinf) {
+          const N = TetrisDefine.PIECE_SIZE;
+          this.Piece = this.getDummy(N, 0);
+
+          for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+              this.Piece[i][j] = pieceinf[i][j];
+            }
+          }
+        }
+
+        /**
+         * 빈값 생성
+         */
+        getDummy(size, defaultValue) {
+          return new Array(size).fill(null).map(() => new Array(size).fill(defaultValue));
+        }
+
+        /**
+         * 아이템 시계 방향 돌리기
+         */
+        getRotateClockwise() {
+          const N = TetrisDefine.PIECE_SIZE;
+          const data = this.getDummy(N, 0);
+
+          for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+              data[j][N - 1 - i] = this.Piece[i][j];
+            }
+          }
+
+          return new PieceItem(data);
+        }
+
+        /**
+         * 아이템 반시계 방향으로 회전
+         */
+        getRotateCounterClockwise() {
+          const N = TetrisDefine.PIECE_SIZE;
+          const data = this.getDummy(N, 0);
+
+          for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+              data[N - 1 - j][i] = this.Piece[i][j];
+            }
+          }
+          return new PieceItem(data);
+        }
+
+        /**
+         * 복제
+         */
+        clone() {
+          const N = TetrisDefine.PIECE_SIZE;
+          const data = this.getDummy(N, 0);
+
+          for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+              data[i][j] = this.Piece[i][j];
+            }
+          }
+
+          return new PieceItem(data);
+        }
+
+        /**
+         * 내용
+         */
+        toString() {
+          const N = TetrisDefine.PIECE_SIZE;
+          let str = "";
+          for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+              str += " " + String(this.Piece[i][j] * 1).padStart(2, " ");
+            }
+            str += "\n";
+          }
+          return str;
+        }
+      }
+
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       * 테트리스 아이템 목록
+       */
+      class PieceList {
+        constructor() {
+          this.PieceItems = [];
+          this.InitList();
+        }
+
+        // 조각 기본 생성
+        InitList() {
+          // 네모난 모양
+          const Piece01 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_RD, PieceColor.PIECE_RD, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_RD, PieceColor.PIECE_RD, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          // L 모양
+          const Piece02 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_YW, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          // ㄱㄴ 합친 모양
+          const Piece03 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_LG, PieceColor.PIECE_LG, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_LG, PieceColor.PIECE_LG, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          // ㅗ 모양
+          const Piece04 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_GR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_GR, PieceColor.PIECE_GR, PieceColor.PIECE_GR, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          // | 모양
+          const Piece05 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          // L 반대 모양
+          const Piece06 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          // ㄱㄴ 합친 반대 모양
+          const Piece07 = [
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_PP, PieceColor.PIECE_PP, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_PP, PieceColor.PIECE_PP, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+          ];
+
+          this.PieceItems.push(new PieceItem(Piece01));
+          this.PieceItems.push(new PieceItem(Piece02));
+          this.PieceItems.push(new PieceItem(Piece03));
+          this.PieceItems.push(new PieceItem(Piece04));
+          this.PieceItems.push(new PieceItem(Piece05));
+          this.PieceItems.push(new PieceItem(Piece06));
+          this.PieceItems.push(new PieceItem(Piece07));
+        }
+
+        /**
+         * index 위치 데이터
+         */
+        getItem(index) {
+          const Result = this.PieceItems[index];
+          return Result.clone();
+        }
+
+        /**
+         * 무작위 데이터
+         */
+        getRandomItem() {
+          return this.getItem(Math.floor(Math.random() * this.PieceItems.length));
+        }
+      }
+
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       * 테트리스 보드
+       */
+      class BoardGround {
+        constructor() {
+          this.Board = new Array(TetrisDefine.MATRIX_BR_Y).fill(null).map(() => new Array(TetrisDefine.MATRIX_BR_X).fill(PieceColor.PIECE_NO));
+          this.init();
+        }
+
+        /**
+         * 초기화
+         */
+        init() {
+          for (let y = 0; y < TetrisDefine.MATRIX_WORK_Y; y++) {
+            for (let x = TetrisDefine.MATRIX_BETWEEN; x < TetrisDefine.MATRIX_WORK_X; x++) {
+              this.Board[y][x] = PieceColor.PIECE_BL;
+            }
+          }
+        }
+
+        /**
+         * 내용
+         */
+        toString() {
+          let str = "";
+          for (let y = 0; y < TetrisDefine.MATRIX_BR_Y; y++) {
+            for (let x = 0; x < TetrisDefine.MATRIX_BR_X; x++) {
+              str += "[" + String(x).padStart(2, " ") + "," + String(y).padStart(2, " ") + "," + String(this.Board[y][x]).padStart(2, " ") + "] ";
+            }
+            str += "\n";
+          }
+
+          return str;
+        }
+      }
+
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       * 테트리스 메인
+       */
+      class TetrisManager {
+        constructor(mainCanvasId, waitCanvasId) {
+          // 이벤트나 콜백등 내부에서 호출 되는 함수는 bind 할 필요가 있음.
+
+          // 초기화
+          this.init = this.init.bind(this);
+          // 매 정해진 시간에 호출될 함수.
+          this.moveInterval = this.moveInterval.bind(this);
+          // 키 이벤트 함수
+          this.handleKeyDown = this.handleKeyDown.bind(this);
+          // 왼쪽 이동
+          this.movePieceLeft = this.movePieceLeft.bind(this);
+          // 오른족 이동
+          this.movePieceRight = this.movePieceRight.bind(this);
+          // 아래
+          this.downPiece = this.downPiece.bind(this);
+          // 모양 변환
+          this.rotatePiece = this.rotatePiece.bind(this);
+
+          // 키 이벤트 등록
+          window.addEventListener("keydown", this.handleKeyDown);
+
+          this.board = new BoardGround();
+          this.piece = new PieceList();
+          this.play = new Object();
+          this.intervalId = null;
+
+          // 캔바스 설정
+          this._setCanvas(mainCanvasId, waitCanvasId);
+
+          this.init();
+        }
+
+        /**
+         *  초기화
+         */
+        init() {
+          this.board.init();
+          this.play.x = 0;
+          this.play.y = 0;
+          this.playPiece = null;
+          this.waitPiece = null;
+          this.intervalTime = 1500;
+          this.gamePoint = 0;
+          this.status = TetrisStatus.Begin;
+          if (this.intervalId != null) clearInterval(this.intervalId);
+          this.intervalId = null;
+        }
+
+        /**
+         * 캔바스 설정
+         */
+        _setCanvas(mainCanvasId, waitCanvasId) {
+          this.canvas = document.getElementById(mainCanvasId);
+          if (!this.canvas) {
+            throw new Error(mainCanvasId + " Canvas id not found.");
+          }
+          if (this.canvas.getContext) {
+            this.canvas.width = TetrisDefine.PIECE_IMG_SIZE * TetrisDefine.MATRIX_X;
+            this.canvas.height = TetrisDefine.PIECE_IMG_SIZE * TetrisDefine.MATRIX_Y;
+
+            this.ctx = this.canvas.getContext("2d");
+            this.canvas.ownerObject = this;
+          }
+
+          this.canvas.addEventListener("click", function (event) {
+            const manager = event.currentTarget.ownerObject;
+
+            if (manager.status == TetrisStatus.Begin) {
+              manager.start();
+            }
+          });
+
+          this.waitCanvas = document.getElementById(waitCanvasId);
+          if (!this.waitCanvas) {
+            throw new Error(waitCanvasId + " Canvas id not found.");
+          }
+          if (this.waitCanvas.getContext) {
+            this.waitCanvas.width = TetrisDefine.PIECE_IMG_SIZE * TetrisDefine.PIECE_SIZE;
+            this.waitCanvas.height = this.waitCanvas.width;
+            this.waitCtx = this.waitCanvas.getContext("2d");
+          }
+        }
+
+        /**
+         * 내용
+         */
+        toString() {
+          let result = "\n";
+          result += "Board\n" + this.board.toString();
+          if (this.playPiece != null) result += "PlayPiece\n" + this.playPiece.toString();
+          result += "\nPlay position : x=" + this.play.x + ", y=" + this.play.y;
+          result += "\nGame Point : " + this.gamePoint;
+          result += "\nInterval Time :" + this.intervalTime;
+          return result;
+        }
+
+        /**
+         * 시작
+         */
+        start() {
+          // 상태를 시작으로
+          this.status = TetrisStatus.Play;
+          // 새로 진행할 아이템. 맨 처음엔 의미 없다. null만 아니면 됨.
+          this.playPiece = {};
+          // 대기할 아이템
+          this.waitPiece = this.piece.getRandomItem();
+
+          for (let i = 0; i < Math.floor(Math.random() * TetrisDefine.PIECE_SIZE); i++) {
+            this.waitPiece = this.waitPiece.getRotateClockwise();
+          }
+
+          this.nextPiece();
+
+          this.procInterval();
+        }
+
+        /**
+         * 매 시간 마다 진행 한다.
+         */
+        procInterval() {
+          this.intervalTime -= 90;
+          if (this.intervalTime <= 0) {
+            //계속 진행 ~
+            return;
+          }
+
+          if (this.intervalId != null) {
+            clearInterval(this.intervalId);
+          }
+
+          this.intervalId = setInterval(this.moveInterval, this.intervalTime);
+        }
+
+        /**
+         * 다음 블럭 등장
+         */
+        nextPiece() {
+          if (this.status != TetrisStatus.Play) return;
+
+          // 아이템의 신규 위치 이동
+          this.play.x = TetrisDefine.MATRIX_BETWEEN + Math.floor(Math.random() * (TetrisDefine.MATRIX_X - TetrisDefine.MATRIX_BETWEEN));
+          this.play.y = 0;
+          //console.info("play 좌표", "x=" + this.play.x, "y=" + this.play.y);
+
+          // 대기 항목을 플레이 아이템으로
+          this.playPiece = this.waitPiece;
+          this.waitPiece = this.piece.getRandomItem();
+
+          for (let i = 0; i < Math.floor(Math.random() * TetrisDefine.PIECE_SIZE); i++) {
+            this.waitPiece = this.waitPiece.getRotateClockwise();
+          }
+        }
+
+        /**
+         * 좌 우, 하단 이동 가능 여부
+         * @Param addX 가로 이동 정보. -값은 왼쪽, +값은 오른쪽
+         * @Param addY 세로 이동 정보. -값은 위로, +값은 아래로
+         * @Param piece 이동할 아이템 조각
+         * @return true : 이동 가능 하다. false: 불가능하다.
+         */
+        checkWidthBlockPiece(addX, addY, piece) {
+          const prex = this.play.x + addX;
+          const prey = this.play.y + addY;
+
+          // console.info("X", prex, "Y", prey, "piece", piece.toString());
+
+          // let str = "";
+          // for (let y = prey, i = 0; i < TetrisDefine.PIECE_SIZE; i++, y++) {
+          //   for (let x = prex, j = 0; j < TetrisDefine.PIECE_SIZE; j++, x++) {
+          //     str +=
+          //       "[(" +
+          //       String(x).padStart(2, " ") +
+          //       ", " +
+          //       String(y).padStart(2, " ") +
+          //       ", " +
+          //       String(this.board.Board[y][x]).padStart(2, " ") +
+          //       ") (" +
+          //       String(j).padStart(2, " ") +
+          //       ", " +
+          //       String(i).padStart(2, " ") +
+          //       ", " +
+          //       String(piece.Piece[i][j]).padStart(2, " ") +
+          //       ")] ";
+          //   }
+          //   str += "\n";
+          // }
+          // console.info(str);
+
+          let result = true;
+          loopCheck: for (let y = prey, i = 0; i < TetrisDefine.PIECE_SIZE; i++, y++) {
+            for (let x = prex, j = 0; j < TetrisDefine.PIECE_SIZE; j++, x++) {
+              if (piece.Piece[i][j] != PieceColor.PIECE_NO) {
+                if (this.board.Board[y][x] != PieceColor.PIECE_BL) {
+                  // console.info(
+                  //   "닿음",
+                  //   "[(" +
+                  //     String(x).padStart(2, " ") +
+                  //     ", " +
+                  //     String(y).padStart(2, " ") +
+                  //     ", " +
+                  //     String(this.board.Board[y][x]).padStart(2, " ") +
+                  //     ") (" +
+                  //     String(j).padStart(2, " ") +
+                  //     ", " +
+                  //     String(i).padStart(2, " ") +
+                  //     ", " +
+                  //     String(piece.Piece[i][j]).padStart(2, " ") +
+                  //     ")] "
+                  // );
+                  result = false;
+                  break loopCheck;
+                }
+              }
+            }
+          }
+
+          if (result) {
+            this.play.x += addX;
+            this.play.y += addY;
+          }
+          return result;
+        }
+
+        /**
+         * 아래 닿는 것 확인한다.
+         * Board와 playPiece를 합친다.
+         * @return true : 닿았다. false: 닿지 않았다.
+         */
+        boardMergePiece() {
+          let isMerge = false;
+          loopMerge: for (let y = this.play.y + TetrisDefine.PIECE_SIZE, i = TetrisDefine.PIECE_SIZE - 1; i > 0; i--, y--) {
+            for (let x = this.play.x, j = 0; j < TetrisDefine.PIECE_SIZE; j++, x++) {
+              if (this.playPiece.Piece[i][j] != PieceColor.PIECE_NO) {
+                if (this.board.Board[y][x] != PieceColor.PIECE_BL) {
+                  // console.info(
+                  //   "터치",
+                  //   "[(" +
+                  //     String(x).padStart(2, " ") +
+                  //     ", " +
+                  //     String(y).padStart(2, " ") +
+                  //     ", " +
+                  //     String(this.board.Board[y][x]).padStart(2, " ") +
+                  //     ") (" +
+                  //     String(j).padStart(2, " ") +
+                  //     ", " +
+                  //     String(i).padStart(2, " ") +
+                  //     ", " +
+                  //     String(this.playPiece.Piece[i][j]).padStart(2, " ") +
+                  //     ")] "
+                  // );
+                  isMerge = true;
+                  break loopMerge;
+                }
+              }
+            }
+          }
+
+          if (isMerge) {
+            // 아래까지 최종 닿았으므로 메인에 붙인다.
+            for (let y = this.play.y, i = 0; i < TetrisDefine.PIECE_SIZE; i++, y++) {
+              for (let x = this.play.x, j = 0; j < TetrisDefine.PIECE_SIZE; j++, x++) {
+                if (this.playPiece.Piece[i][j] != PieceColor.PIECE_NO) {
+                  this.board.Board[y][x] = this.playPiece.Piece[i][j];
+                }
+              }
+            }
+          }
+
+          return isMerge;
+        }
+
+        /**
+         * 성공 여부 판단. 및 포인트 변경
+         */
+        checkSuccessLine() {
+          const wCnt = TetrisDefine.MATRIX_X + TetrisDefine.MATRIX_BETWEEN;
+          let successCount = 0;
+          for (let y = TetrisDefine.MATRIX_WORK_Y - 1; y >= 0; y--) {
+            let count = 0;
+            for (let x = TetrisDefine.MATRIX_BETWEEN; x < wCnt; x++) {
+              count += this.board.Board[y][x] == PieceColor.PIECE_BL ? 0 : 1;
+            }
+
+            if (count == TetrisDefine.MATRIX_X) {
+              successCount++;
+
+              for (let in_y = y; in_y > 0; in_y--) {
+                for (let x = TetrisDefine.MATRIX_BETWEEN; x < wCnt; x++) {
+                  this.board.Board[in_y][x] = this.board.Board[in_y - 1][x];
+                }
+              }
+            }
+          }
+
+          if (successCount > 0) {
+            // 점수 포인트 올린다.
+            this.gamePoint += 10 * (successCount + (successCount - 1));
+
+            if (this.gamePoint > 100) {
+              // 시간을 더 빠르게 진행 한다.
+              this.procInterval();
+            }
+          }
+        }
+
+        /**
+         * 왼쪽으로 이동
+         */
+        movePieceLeft() {
+          if (this.status != TetrisStatus.Play) return;
+
+          this.checkWidthBlockPiece(-1, 0, this.playPiece);
+        }
+
+        /**
+         * 오른쪽으로 이동
+         */
+        movePieceRight() {
+          if (this.status != TetrisStatus.Play) return;
+
+          this.checkWidthBlockPiece(1, 0, this.playPiece);
+        }
+
+        /**
+         * 아래로 바로
+         */
+        downPiece() {
+          if (this.status != TetrisStatus.Play) return;
+
+          while (this.checkWidthBlockPiece(0, 1, this.playPiece)) {}
+
+          if (this.boardMergePiece()) {
+            this.checkSuccessLine();
+          }
+          this.nextPiece();
+          this.checkEndGame();
+        }
+
+        /**
+         * 아이템 모양 회전
+         */
+        rotatePiece() {
+          if (this.status != TetrisStatus.Play) return;
+
+          const rotate = this.playPiece.getRotateClockwise();
+          if (this.checkWidthBlockPiece(0, 0, rotate)) {
+            this.playPiece = rotate;
+          }
+        }
+
+        /**
+         * 정해진 시간에 움직인다.
+         */
+        moveInterval() {
+          if (this.status != TetrisStatus.Play) return;
+
+          if (!this.checkWidthBlockPiece(0, 1, this.playPiece)) {
+            if (this.boardMergePiece()) {
+              this.checkSuccessLine();
+            }
+            this.nextPiece();
+            this.checkEndGame();
+          }
+        }
+
+        /**
+         * 게임 종료 체크 여부
+         */
+        checkEndGame() {
+          let count = 0;
+          const wCnt = TetrisDefine.MATRIX_X + TetrisDefine.MATRIX_BETWEEN;
+          for (let x = TetrisDefine.MATRIX_BETWEEN; x < wCnt; x++) {
+            count += this.board.Board[TetrisDefine.MATRIX_BETWEEN][x] == PieceColor.PIECE_BL ? 0 : 1;
+          }
+
+          if (count > 0) {
+            console.info("끝~");
+            if (this.intervalId != null) clearInterval(this.intervalId);
+            this.status = TetrisStatus.Finish;
+            clearCanvas(this.waitCtx);
+            this.playPiece = null;
+          }
+        }
+
+        /**
+         * 키보드 다운 이벤트
+         */
+        handleKeyDown(event) {
+          switch (event.key) {
+            case "ArrowLeft": {
+              this.movePieceLeft();
+              break;
+            }
+            case "ArrowRight": {
+              this.movePieceRight();
+              break;
+            }
+            case "ArrowDown": {
+              this.downPiece();
+              break;
+            }
+            case "ArrowUp": {
+              this.rotatePiece();
+              break;
+            }
+            case "Escape": {
+              this.init();
+              break;
+            }
+          }
+        }
+      } // 테스트리스 끝~
+
+      // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
+
+      /**
+       * 페이지 최초 로딩.
+       */
+      function loadBody() {
+        // 테트리스 인스턴스 생성
+        const tetris = new TetrisManager("canvasBoard", "canvasNext");
+
+        regButtonClickEvent("btnLeft", tetris.movePieceLeft);
+        regButtonClickEvent("btnRight", tetris.movePieceRight);
+        regButtonClickEvent("btnDown", tetris.downPiece);
+        regButtonClickEvent("btnRotate", tetris.rotatePiece);
+        regButtonClickEvent("btnInit", tetris.init);
+
+        console.info(tetris.toString());
+
+        draw(tetris);
+      }
+
+      /**
+       * 버튼 이벤트 등록
+       */
+      function regButtonClickEvent(id, event) {
+        const element = document.getElementById(id);
+        element.addEventListener("click", () => {
+          event();
+        });
+      }
+
+      /**
+       * 테트리스 블럭 그리기
+       * @param {ctx} canvas context
+       * @param {x}, {y} 는 보드 위치
+       * @param {pieceItem} 테스트리스 조각 아이템
+       */
+      function drawPiece(ctx, x, y, pieceItem) {
+        // canvas에 그릴 좌표로 변환.
+        x *= TetrisDefine.PIECE_IMG_SIZE;
+        y *= TetrisDefine.PIECE_IMG_SIZE;
+
+        const cr = pieceItem.Piece;
+
+        for (let i = 0; i < TetrisDefine.PIECE_SIZE; i++) {
+          for (let j = 0; j < TetrisDefine.PIECE_SIZE; j++) {
+            drawBlock(ctx, x + TetrisDefine.PIECE_IMG_SIZE * j, y + TetrisDefine.PIECE_IMG_SIZE * i, cr[i][j]);
+          }
+        }
+      }
+
+      /**
+       * 블럭 색칠
+       * @param {ctx} canvas context
+       * @param {x, y} 픽셀 위치
+       * @param {color} PieceColor
+       */
+      function drawBlock(ctx, x, y, color) {
+        let rgba;
+        switch (color) {
+          case PieceColor.PIECE_NO:
+            rgba = "rgba(0, 0, 0, 0.0)";
+            break;
+          case PieceColor.PIECE_BL:
+            rgba = "rgba(0, 0, 0, 1.0)";
+            break;
+          case PieceColor.PIECE_RD:
+            rgba = "rgba(255, 0, 0, 1.0)";
+            break;
+          case PieceColor.PIECE_YW:
+            rgba = "rgba(255, 255, 0, 1.0)";
+            break;
+          case PieceColor.PIECE_LG:
+            rgba = "rgba(0, 255, 0, 1.0)";
+            break;
+          case PieceColor.PIECE_GR:
+            rgba = "rgba(0, 128, 0, 1.0)";
+            break;
+          case PieceColor.PIECE_BU:
+            rgba = "rgba(0, 0, 255, 1.0)";
+            break;
+          case PieceColor.PIECE_OR:
+            rgba = "rgba(255, 165, 0, 1.0)";
+            break;
+          case PieceColor.PIECE_PP:
+            rgba = "rgba(128, 0, 128, 1.0)";
+            break;
+          case PieceColor.PIECE_NV:
+            rgba = "rgba(0, 128, 128, 1.0)";
+            break;
+          default:
+            return;
+        }
+
+        // 기본 블랙이나 암것도 없는 것은 걍 칠하고 색이 있는 것은 SquarePyramid 형태로 그린다.
+        if (color == PieceColor.PIECE_BL || color == PieceColor.PIECE_NO) {
+          ctx.beginPath();
+          ctx.fillStyle = rgba;
+          ctx.fillRect(x, y, TetrisDefine.PIECE_IMG_SIZE, TetrisDefine.PIECE_IMG_SIZE);
+          ctx.closePath();
+        } else {
+          drawSquarePyramid(ctx, TetrisDefine.PIECE_IMG_SIZE, x, y, rgba);
+        }
+      }
+
+      /**
+       * 사각 피라미드 모양 만들기
+       * @param ctx canvas context
+       * @param size 모양의 크기
+       * @param x 가로 위치
+       * @param y 세로 위치
+       * @param rgba color
+       */
+      function drawSquarePyramid(ctx, size, x, y, rgba) {
+        const half = size / 2;
+        const topx = x,
+          topy = y;
+        const centerx = topx + half,
+          centery = topy + half;
+        const bottomx = topx + size,
+          bottomy = topy + size;
+
+        // 컬러 그룹으로 입체감이 느껴지도록 한다.
+        const colorGroup = getColorDarkerGroup(rgba);
+
+        // 왼쪽
+        ctx.fillStyle = colorGroup.left;
+        ctx.beginPath();
+        ctx.moveTo(topx, topy);
+        ctx.lineTo(centerx, centery);
+        ctx.lineTo(topx, bottomy);
+        ctx.closePath();
+        ctx.fill();
+
+        // 오른쪽
+        ctx.fillStyle = colorGroup.right;
+        ctx.beginPath();
+        ctx.moveTo(bottomx, topy);
+        ctx.lineTo(centerx, centery);
+        ctx.lineTo(bottomx, bottomy);
+        ctx.closePath();
+        ctx.fill();
+
+        // 위
+        ctx.fillStyle = colorGroup.top;
+        ctx.beginPath();
+        ctx.moveTo(topx, topy);
+        ctx.lineTo(centerx, centery);
+        ctx.lineTo(bottomx, topy);
+        ctx.closePath();
+        ctx.fill();
+
+        // 아래
+        ctx.fillStyle = colorGroup.bottom;
+        ctx.beginPath();
+        ctx.moveTo(topx, bottomy);
+        ctx.lineTo(centerx, centery);
+        ctx.lineTo(bottomx, bottomy);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      /**
+       * 각 색상 채널 밝기 조절
+       */
+      function makeColorDarker(r, g, b, a, amount) {
+        const newR = Math.min(255, Math.max(0, r + amount));
+        const newG = Math.min(255, Math.max(0, g + amount));
+        const newB = Math.min(255, Math.max(0, b + amount));
+        const newA = Number.isNaN(a) ? 1.0 : a;
+
+        // 새로운 RGB 값 반환
+        return `rgba(${newR}, ${newG}, ${newB}, ${newA})`;
+      }
+
+      /**
+       * 조금씩 어두워 지는 컬러 만들기
+       */
+      function getColorDarkerGroup(rgb) {
+        // RGB 값 추출
+        const result = new Object();
+
+        let rgbSlice = rgb.slice(rgb.indexOf("(") + 1, rgb.indexOf(")")).split(",");
+        if (!rgbSlice) {
+          console.info(" 올바르지 않은 형식의 RGB 값이면 그대로 반환");
+
+          result.left = rgb;
+          result.top = rgb;
+          result.bottom = rgb;
+          result.right = rgb;
+
+          return result;
+        }
+
+        const r = parseInt(rgbSlice[0]);
+        const g = parseInt(rgbSlice[1]);
+        const b = parseInt(rgbSlice[2]);
+        const a = parseInt(rgbSlice[3]);
+
+        // 왼쪽이 가장 밝고 그 다음 위 아래, 오른쪽이 가장 어둡다.
+        result.left = makeColorDarker(r, g, b, a, 20);
+        result.top = makeColorDarker(r, g, b, a, 0);
+        result.bottom = makeColorDarker(r, g, b, a, -20);
+        result.right = makeColorDarker(r, g, b, a, -40);
+
+        return result;
+      }
+
+      /**
+       * 그림자 들어간 글자 나타내기
+       * @param ctx canvas context
+       * @param font 폰트 크기 및 모양
+       * @param shadowColor 배경 색
+       * @param txtColor 글자 색
+       * @param msg 내용
+       * @param align 정렬
+       * @param x 가로 위치
+       * @param y 세로 위치
+       */
+      function drawShedowText(ctx, font, shadowColor, txtColor, msg, align, x, y) {
+        ctx.font = font;
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 6;
+        ctx.lineWidth = 2;
+        ctx.textAlign = align;
+        ctx.strokeText(msg, x, y);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = txtColor;
+        ctx.textAlign = align;
+        ctx.fillText(msg, x, y);
+      }
+
+      /**
+       * 캔바스 깨끗!
+       */
+      function clearCanvas(ctx) {
+        const canvas = ctx.canvas;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      /**
+       * 테스트리 보드 그리기
+       */
+      function draw(tetris) {
+        const ctx = tetris.ctx;
+        clearCanvas(ctx);
+        clearCanvas(tetris.waitCtx);
+
+        if (tetris.status == TetrisStatus.Begin) {
+          drawShedowText(ctx, "15px Arial", "black", "yellow", "Start", "center", tetris.canvas.width / 2, tetris.canvas.height / 2);
+          drawShedowText(ctx, "20px Arial", "blue", "white", "Touch", "center", tetris.canvas.width / 2, tetris.canvas.height / 2 + 30);
+
+          requestAnimationFrame(function (timestamp) {
+            draw(tetris);
+          });
+          return;
+        }
+
+        // 테트리스 보드 표시
+        for (let y = TetrisDefine.MATRIX_BETWEEN, j = 0; y < TetrisDefine.MATRIX_WORK_Y; y++, j++) {
+          for (let x = TetrisDefine.MATRIX_BETWEEN, i = 0; x < TetrisDefine.MATRIX_WORK_X; x++, i++) {
+            drawBlock(ctx, i * TetrisDefine.PIECE_IMG_SIZE, j * TetrisDefine.PIECE_IMG_SIZE, tetris.board.Board[y][x]);
+          }
+        }
+
+        // 게임 조각 표시
+        if (tetris.status == TetrisStatus.Play) {
+          drawPiece(ctx, tetris.play.x - TetrisDefine.MATRIX_BETWEEN, tetris.play.y - TetrisDefine.MATRIX_BETWEEN, tetris.playPiece);
+          // 다음 대기 아이템을 그려 준다.
+          drawPiece(tetris.waitCtx, 0, 0, tetris.waitPiece);
+        }
+
+        // 점수 표시
+        drawShedowText(ctx, "14px Arial", "cyan", "cyan", tetris.gamePoint, "right", tetris.canvas.width - 10, 20);
+
+        // 게임 종료 표시
+        if (tetris.status == TetrisStatus.Finish) {
+          drawShedowText(ctx, "20px Arial", "white", "white", "The end.", "center", tetris.canvas.width / 2, tetris.canvas.height / 2);
+        }
+
+        requestAnimationFrame(function (timestamp) {
+          draw(tetris);
+        });
+      }
+    </script>
+  </head>
+  <body onload="loadBody();">
+    <canvas id="canvasBoard"></canvas>
+    <canvas id="canvasNext"></canvas>
+    <div><button id="btnLeft">Left</button> <button id="btnRight">Right</button> <button id="btnDown">Down</button> <button id="btnRotate">Rotate</button> <button id="btnInit">Init</button></div>
+  </body>
+</html>
