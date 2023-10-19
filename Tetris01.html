@@ -24,6 +24,16 @@
       canvas {
         border: 1px solid rgb(0, 0, 0);
       }
+
+      table {
+        border-collapse: collapse;
+      }
+
+      td {
+        width: 60px;
+        height: 30px;
+        border: none;
+      }
     </style>
 
     <script type="application/javascript">
@@ -186,74 +196,75 @@
       class PieceList {
         constructor() {
           this.PieceItems = [];
-          this.InitList();
-        }
-
-        // 조각 기본 생성
-        InitList() {
           // 네모난 모양
-          const Piece01 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_RD, PieceColor.PIECE_RD, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_RD, PieceColor.PIECE_RD, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_RD, PieceColor.PIECE_RD, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_RD, PieceColor.PIECE_RD, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
 
           // L 모양
-          const Piece02 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_YW, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_YW, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
 
           // ㄱㄴ 합친 모양
-          const Piece03 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_LG, PieceColor.PIECE_LG, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_LG, PieceColor.PIECE_LG, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_LG, PieceColor.PIECE_LG, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_LG, PieceColor.PIECE_LG, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
 
           // ㅗ 모양
-          const Piece04 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_GR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_GR, PieceColor.PIECE_GR, PieceColor.PIECE_GR, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_GR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_GR, PieceColor.PIECE_GR, PieceColor.PIECE_GR, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
 
           // | 모양
-          const Piece05 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
 
           // L 반대 모양
-          const Piece06 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
 
           // ㄱㄴ 합친 반대 모양
-          const Piece07 = [
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_PP, PieceColor.PIECE_PP, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_PP, PieceColor.PIECE_PP, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-            [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
-          ];
-
-          this.PieceItems.push(new PieceItem(Piece01));
-          this.PieceItems.push(new PieceItem(Piece02));
-          this.PieceItems.push(new PieceItem(Piece03));
-          this.PieceItems.push(new PieceItem(Piece04));
-          this.PieceItems.push(new PieceItem(Piece05));
-          this.PieceItems.push(new PieceItem(Piece06));
-          this.PieceItems.push(new PieceItem(Piece07));
+          this.PieceItems.push(
+            new PieceItem([
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_PP, PieceColor.PIECE_PP, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_PP, PieceColor.PIECE_PP, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+              [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
+            ])
+          );
         }
 
         /**
@@ -331,11 +342,11 @@
           this.movePieceRight = this.movePieceRight.bind(this);
           // 아래
           this.downPiece = this.downPiece.bind(this);
+          // 바닥
+          this.bottomPiece = this.bottomPiece.bind(this);
+
           // 모양 변환
           this.rotatePiece = this.rotatePiece.bind(this);
-
-          // 키 이벤트 등록
-          window.addEventListener("keydown", this.handleKeyDown);
 
           this.board = new BoardGround();
           this.piece = new PieceList();
@@ -640,9 +651,24 @@
         }
 
         /**
-         * 아래로 바로
+         * 아래로 이동
          */
         downPiece() {
+          if (this.status != TetrisStatus.Play) return;
+
+          if (!this.checkWidthBlockPiece(0, 1, this.playPiece)) {
+            if (this.boardMergePiece()) {
+              this.checkSuccessLine();
+            }
+            this.nextPiece();
+            this.checkEndGame();
+          }
+        }
+
+        /**
+         * 아래로 바로
+         */
+        bottomPiece() {
           if (this.status != TetrisStatus.Play) return;
 
           while (this.checkWidthBlockPiece(0, 1, this.playPiece)) {}
@@ -672,13 +698,7 @@
         moveInterval() {
           if (this.status != TetrisStatus.Play) return;
 
-          if (!this.checkWidthBlockPiece(0, 1, this.playPiece)) {
-            if (this.boardMergePiece()) {
-              this.checkSuccessLine();
-            }
-            this.nextPiece();
-            this.checkEndGame();
-          }
+          this.downPiece();
         }
 
         /**
@@ -704,24 +724,34 @@
          * 키보드 다운 이벤트
          */
         handleKeyDown(event) {
-          switch (event.key) {
-            case "ArrowLeft": {
+          switch (event.keyCode) {
+            case 37: {
+              // left
               this.movePieceLeft();
               break;
             }
-            case "ArrowRight": {
+            case 39: {
+              // right
               this.movePieceRight();
               break;
             }
-            case "ArrowDown": {
+            case 40: {
+              // down
               this.downPiece();
               break;
             }
-            case "ArrowUp": {
+            case 32: {
+              // spacebar
+              this.bottomPiece();
+              break;
+            }
+            case 38: {
+              // up
               this.rotatePiece();
               break;
             }
-            case "Escape": {
+            case 27: {
+              // esc
               this.init();
               break;
             }
@@ -738,10 +768,14 @@
         // 테트리스 인스턴스 생성
         const tetris = new TetrisManager("canvasBoard", "canvasNext");
 
+        // 키 이벤트 등록
+        window.addEventListener("keydown", tetris.handleKeyDown);
+
         regButtonClickEvent("btnLeft", tetris.movePieceLeft);
         regButtonClickEvent("btnRight", tetris.movePieceRight);
         regButtonClickEvent("btnDown", tetris.downPiece);
         regButtonClickEvent("btnRotate", tetris.rotatePiece);
+        regButtonClickEvent("btnBottom", tetris.bottomPiece);
         regButtonClickEvent("btnInit", tetris.init);
 
         console.info(tetris.toString());
@@ -1017,6 +1051,24 @@
   <body onload="loadBody();">
     <canvas id="canvasBoard"></canvas>
     <canvas id="canvasNext"></canvas>
-    <div><button id="btnLeft">Left</button> <button id="btnRight">Right</button> <button id="btnDown">Down</button> <button id="btnRotate">Rotate</button> <button id="btnInit">Init</button></div>
+    <div>
+      <table>
+        <tr>
+          <td id="btnInit" style="background-color: antiquewhite; text-align: left">Init</td>
+          <td id="btnRotate" style="background-color: coral; text-align: center">Rotate</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td id="btnLeft" style="background-color: coral; text-align: left">Left</td>
+          <td id="btnDown" style="background-color: violet; text-align: center">Down</td>
+          <td id="btnRight" style="background-color: coral; text-align: right">Right</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td id="btnBottom" style="background-color: coral; text-align: center">Bottom</td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
   </body>
 </html>
