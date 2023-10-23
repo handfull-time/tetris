@@ -370,6 +370,7 @@
           this.waitPiece = null;
           this.intervalTime = 1500;
           this.gamePoint = 0;
+          this.gameLevel = 0;
           this.status = TetrisStatus.Begin;
           if (this.intervalId != null) clearInterval(this.intervalId);
           this.intervalId = null;
@@ -626,8 +627,9 @@
             // 점수 포인트 올린다.
             this.gamePoint += 10 * (successCount + (successCount - 1));
 
-            if (this.gamePoint > 100) {
+            if (this.gamePoint / 200 > this.gemeLevel) {
               // 시간을 더 빠르게 진행 한다.
+              this.gameLevel++;
               this.procInterval();
             }
           }
