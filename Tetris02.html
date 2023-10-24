@@ -4,8 +4,9 @@
     <meta charset="utf-8" />
     <meta author="utimezgd@gmail.com" />
     <meta url="https://github.com/handfull-time/tetris" />
+    <meta url="https://handfull-time.github.io/tetris/" />
 
-    <title>테트리스</title>
+    <title>Tetris</title>
     <style>
       canvas {
         border: 1px solid rgb(0, 0, 0);
@@ -15,7 +16,7 @@
       }
 
       td {
-        width: 60px;
+        width: 120px;
         height: 30px;
         border: none;
       }
@@ -23,20 +24,20 @@
 
     <script type="application/javascript">
       /**
-       * 아이템 이미지 크기
+       * Item image size
        */
       const BLOCK_SIZE = 16;
       /**
-       * 테트리스 기본 정의 값.
-       * 가로는 X 축, 세로는 Y 축 ( X, Y )
+       * Tetris default definition value.
+       * Horizontal is the X-axis, vertical is the Y-axis (X, Y)
        */
       const TetrisDefine = {
-        // 테트리스 보드 크기
-        MATRIX_X: parseInt(window.innerWidth / BLOCK_SIZE) - 2,
+        // Tetris board size
+        MATRIX_X: parseInt((window.innerWidth - 20) / BLOCK_SIZE),
         MATRIX_Y: parseInt(window.innerHeight / BLOCK_SIZE) - 7,
-        // 아이템의 블럭 크기
+        // Item block size
         PIECE_SIZE: 4,
-        // 아이템의 이미지 크기 홀수보단 짝수가...
+        // Even numbers are better than odd numbers for item image size.
         PIECE_IMG_SIZE: BLOCK_SIZE,
       };
 
@@ -50,50 +51,45 @@
       TetrisDefine.MATRIX_WORK_X = TetrisDefine.MATRIX_BR_X - TetrisDefine.MATRIX_BETWEEN;
       TetrisDefine.MATRIX_WORK_Y = TetrisDefine.MATRIX_BR_Y - TetrisDefine.MATRIX_BETWEEN;
 
-      // 객체 값 고정
       Object.freeze(TetrisDefine);
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       *  테스리스 상태
+       *  Tetris state
        */
       const TetrisStatus = {
-        // 시작 대기 상태
+        // Game start waiting state
         Begin: 0,
-        // 진행 중
+        // Game in progress
         Play: 1,
-        // 게임 종료
+        // Game over
         Finish: 2,
       };
-
-      // 객체 값 고정
       Object.freeze(TetrisStatus);
 
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 아이템의 색깔
+       * Color of Tetris piece item
        */
       const PieceColor = {
-        PIECE_NO: -1, // 칠하지 않음
-        PIECE_BL: 0, // 검정-BLACK
-        PIECE_RD: 1, // 빨강-RED
-        PIECE_YW: 2, // 노랑-YELLOW
-        PIECE_LG: 3, // 연두-LIGHT GREEN
-        PIECE_GR: 4, // 녹색-GREEN
-        PIECE_BU: 5, // 파랑-BLUE
-        PIECE_OR: 6, // 주황-ORANGE
-        PIECE_PP: 7, // 보라-PURPLE
-        PIECE_NV: 8, // 군청-NAVY BLUE
+        PIECE_NO: -1, // No painting
+        PIECE_BL: 0, // BLACK
+        PIECE_RD: 1, // RED
+        PIECE_YW: 2, // YELLOW
+        PIECE_LG: 3, // LIGHT GREEN
+        PIECE_GR: 4, // GREEN
+        PIECE_BU: 5, // BLUE
+        PIECE_OR: 6, // ORANGE
+        PIECE_PP: 7, // PURPLE
+        PIECE_NV: 8, // NAVY BLUE
       };
-
-      // 객체 값 고정
       Object.freeze(PieceColor);
 
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 테트리스 아이템
+       * Tetris piece item
        */
       class PieceItem {
         constructor(pieceinf) {
@@ -108,14 +104,16 @@
         }
 
         /**
-         * 빈값 생성
+         * Create an empty value array
+         * @param {size} size
+         * @param {defaultValue} default value.
          */
         getDummy(size, defaultValue) {
           return new Array(size).fill(null).map(() => new Array(size).fill(defaultValue));
         }
 
         /**
-         * 아이템 시계 방향 돌리기
+         * Rotate Tetris piece item clockwise
          */
         getRotateClockwise() {
           const N = TetrisDefine.PIECE_SIZE;
@@ -131,7 +129,7 @@
         }
 
         /**
-         * 아이템 반시계 방향으로 회전
+         * Rotate Tetris piece item counter-clockwise
          */
         getRotateCounterClockwise() {
           const N = TetrisDefine.PIECE_SIZE;
@@ -146,7 +144,7 @@
         }
 
         /**
-         * 복제
+         * clone
          */
         clone() {
           const N = TetrisDefine.PIECE_SIZE;
@@ -162,7 +160,7 @@
         }
 
         /**
-         * 내용
+         * comment
          */
         toString() {
           const N = TetrisDefine.PIECE_SIZE;
@@ -180,12 +178,13 @@
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 테트리스 아이템 목록
+       * Tetris item list
        */
       class PieceList {
         constructor() {
           this.PieceItems = [];
-          // 네모난 모양
+
+          // □ Square shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
@@ -195,7 +194,7 @@
             ])
           );
 
-          // L 모양
+          // ┗ shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_YW, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
@@ -205,7 +204,7 @@
             ])
           );
 
-          // ㄱㄴ 합친 모양
+          // ┒┕ Combined shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
@@ -215,7 +214,7 @@
             ])
           );
 
-          // ㅗ 모양
+          // ┷ shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
@@ -225,7 +224,7 @@
             ])
           );
 
-          // | 모양
+          // ┃ shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_OR, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
@@ -235,7 +234,7 @@
             ])
           );
 
-          // L 반대 모양
+          // ┙ shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NV, PieceColor.PIECE_NO],
@@ -245,7 +244,7 @@
             ])
           );
 
-          // ㄱㄴ 합친 반대 모양
+          // ┛┌ Combined shape
           this.PieceItems.push(
             new PieceItem([
               [PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO, PieceColor.PIECE_NO],
@@ -257,7 +256,8 @@
         }
 
         /**
-         * index 위치 데이터
+         * Index position data
+         * @param {index} index
          */
         getItem(index) {
           const Result = this.PieceItems[index];
@@ -265,7 +265,7 @@
         }
 
         /**
-         * 무작위 데이터
+         * Random data
          */
         getRandomItem() {
           return this.getItem(Math.floor(Math.random() * this.PieceItems.length));
@@ -275,7 +275,7 @@
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 테트리스 보드
+       * Tetris board
        */
       class BoardGround {
         constructor() {
@@ -284,7 +284,7 @@
         }
 
         /**
-         * 초기화
+         * Initialization
          */
         init() {
           for (let y = 0; y < TetrisDefine.MATRIX_WORK_Y; y++) {
@@ -295,7 +295,7 @@
         }
 
         /**
-         * 내용
+         * comment
          */
         toString() {
           let str = "";
@@ -313,27 +313,27 @@
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 테트리스 메인
+       * Tetris main class
        */
       class TetrisManager {
         constructor(mainCanvasId, waitCanvasId) {
-          // 이벤트나 콜백등 내부에서 호출 되는 함수는 bind 할 필요가 있음.
+          // Functions called internally from events or callbacks need to be bound.
 
-          // 초기화
+          // Initialization
           this.init = this.init.bind(this);
-          // 매 정해진 시간에 호출될 함수.
+          // Function to be called at a set time.
           this.moveInterval = this.moveInterval.bind(this);
-          // 키 이벤트 함수
+          // Key event function
           this.handleKeyDown = this.handleKeyDown.bind(this);
-          // 왼쪽 이동
+          // Move left
           this.movePieceLeft = this.movePieceLeft.bind(this);
-          // 오른족 이동
+          // Move right
           this.movePieceRight = this.movePieceRight.bind(this);
-          // 아래
+          // down
           this.downPiece = this.downPiece.bind(this);
-          // 바닥
+          // bottom
           this.bottomPiece = this.bottomPiece.bind(this);
-          // 모양 변환
+          // rotate
           this.rotatePiece = this.rotatePiece.bind(this);
 
           this.board = new BoardGround();
@@ -341,14 +341,14 @@
           this.play = new Object();
           this.intervalId = null;
 
-          // 캔바스 설정
+          // Canvas settings
           this._setCanvas(mainCanvasId, waitCanvasId);
 
           this.init();
         }
 
         /**
-         *  초기화
+         * Initialization
          */
         init() {
           this.board.init();
@@ -365,7 +365,9 @@
         }
 
         /**
-         * 캔바스 설정
+         * Canvas settings
+         * @param {mainCanvasId} Main canvas ID
+         * @param {waitCanvasId} Waiting block canvas ID
          */
         _setCanvas(mainCanvasId, waitCanvasId) {
           this.canvas = document.getElementById(mainCanvasId);
@@ -400,7 +402,7 @@
         }
 
         /**
-         * 내용
+         * comment
          */
         toString() {
           let result = "\n";
@@ -413,14 +415,14 @@
         }
 
         /**
-         * 시작
+         * game start.
          */
         start() {
-          // 상태를 시작으로
+          // Change status to start.
           this.status = TetrisStatus.Play;
-          // 새로 진행할 아이템. 맨 처음엔 의미 없다. null만 아니면 됨.
+          // New item to proceed with. Initially, it doesn't matter as long as it's not null.
           this.playPiece = {};
-          // 대기할 아이템
+          // Item to wait for
           this.waitPiece = this.piece.getRandomItem();
 
           for (let i = 0; i < Math.floor(Math.random() * TetrisDefine.PIECE_SIZE); i++) {
@@ -433,12 +435,11 @@
         }
 
         /**
-         * 매 시간 마다 진행 한다.
+         * Proceed every set time.
          */
         procInterval() {
           this.intervalTime -= 90;
           if (this.intervalTime <= 0) {
-            //계속 진행 ~
             return;
           }
 
@@ -450,17 +451,17 @@
         }
 
         /**
-         * 다음 블럭 등장
+         * Next block appears
          */
         nextPiece() {
           if (this.status != TetrisStatus.Play) return;
 
-          // 아이템의 신규 위치 이동
+          // Move the new position of the item
           this.play.x = TetrisDefine.MATRIX_BETWEEN + Math.floor(Math.random() * (TetrisDefine.MATRIX_X - TetrisDefine.MATRIX_BETWEEN));
           this.play.y = 0;
-          //console.info("play 좌표", "x=" + this.play.x, "y=" + this.play.y);
+          //console.info("play position", "x=" + this.play.x, "y=" + this.play.y);
 
-          // 대기 항목을 플레이 아이템으로
+          // Change waiting item to play item
           this.playPiece = this.waitPiece;
           this.waitPiece = this.piece.getRandomItem();
 
@@ -470,11 +471,11 @@
         }
 
         /**
-         * 좌 우, 하단 이동 가능 여부
-         * @Param addX 가로 이동 정보. -값은 왼쪽, +값은 오른쪽
-         * @Param addY 세로 이동 정보. -값은 위로, +값은 아래로
-         * @Param piece 이동할 아이템 조각
-         * @return true : 이동 가능 하다. false: 불가능하다.
+         * Determine if left, right, and bottom movements are possible.
+         * @Param {addX} Horizontal movement info. Negative values for left, positive values for right.
+         * @Param {addY} Vertical movement info. Negative values for up, positive values for down.
+         * @Param {piece} Piece of item to move
+         * @return true: movement is possible. false: movement is impossible.
          */
         checkWidthBlockPiece(addX, addY, piece) {
           const prex = this.play.x + addX;
@@ -510,7 +511,7 @@
               if (piece.Piece[i][j] != PieceColor.PIECE_NO) {
                 if (this.board.Board[y][x] != PieceColor.PIECE_BL) {
                   // console.info(
-                  //   "닿음",
+                  //   "touch",
                   //   "[(" +
                   //     String(x).padStart(2, " ") +
                   //     ", " +
@@ -540,9 +541,9 @@
         }
 
         /**
-         * 아래 닿는 것 확인한다.
-         * Board와 playPiece를 합친다.
-         * @return true : 닿았다. false: 닿지 않았다.
+         * Check if it touches below.
+         * Combine Board and playPiece.
+         * @return true: it touched. false: it didn't touch.
          */
         boardMergePiece() {
           let isMerge = false;
@@ -551,7 +552,7 @@
               if (this.playPiece.Piece[i][j] != PieceColor.PIECE_NO) {
                 if (this.board.Board[y][x] != PieceColor.PIECE_BL) {
                   // console.info(
-                  //   "터치",
+                  //   "touch",
                   //   "[(" +
                   //     String(x).padStart(2, " ") +
                   //     ", " +
@@ -574,7 +575,7 @@
           }
 
           if (isMerge) {
-            // 아래까지 최종 닿았으므로 메인에 붙인다.
+            // Attach to the main since it finally reached the bottom.
             for (let y = this.play.y, i = 0; i < TetrisDefine.PIECE_SIZE; i++, y++) {
               for (let x = this.play.x, j = 0; j < TetrisDefine.PIECE_SIZE; j++, x++) {
                 if (this.playPiece.Piece[i][j] != PieceColor.PIECE_NO) {
@@ -588,7 +589,7 @@
         }
 
         /**
-         * 성공 여부 판단. 및 포인트 변경
+         * Determine success. Change points.
          */
         checkSuccessLine() {
           const wCnt = TetrisDefine.MATRIX_X + TetrisDefine.MATRIX_BETWEEN;
@@ -612,11 +613,11 @@
           }
 
           if (successCount > 0) {
-            // 점수 포인트 올린다.
+            // Increase score points.
             this.gamePoint += 10 * (successCount + (successCount - 1));
 
             if (this.gamePoint / 200 > this.gemeLevel) {
-              // 시간을 더 빠르게 진행 한다.
+              // Proceed with the time faster.
               this.gameLevel++;
               this.procInterval();
             }
@@ -624,7 +625,7 @@
         }
 
         /**
-         * 왼쪽으로 이동
+         * Move to the left.
          */
         movePieceLeft() {
           if (this.status != TetrisStatus.Play) return;
@@ -633,7 +634,7 @@
         }
 
         /**
-         * 오른쪽으로 이동
+         * Move to the right.
          */
         movePieceRight() {
           if (this.status != TetrisStatus.Play) return;
@@ -642,7 +643,7 @@
         }
 
         /**
-         * 아래로 이동
+         * Move downward.
          */
         downPiece() {
           if (this.status != TetrisStatus.Play) return;
@@ -657,7 +658,7 @@
         }
 
         /**
-         * 아래로 바로
+         * Move to the floor.
          */
         bottomPiece() {
           if (this.status != TetrisStatus.Play) return;
@@ -672,7 +673,7 @@
         }
 
         /**
-         * 아이템 모양 회전
+         * Rotate the item shape.
          */
         rotatePiece() {
           if (this.status != TetrisStatus.Play) return;
@@ -684,7 +685,7 @@
         }
 
         /**
-         * 정해진 시간에 움직인다.
+         * Moves at a set time.
          */
         moveInterval() {
           if (this.status != TetrisStatus.Play) return;
@@ -693,7 +694,7 @@
         }
 
         /**
-         * 게임 종료 체크 여부
+         * Determine if the game is over.
          */
         checkEndGame() {
           let count = 0;
@@ -703,7 +704,7 @@
           }
 
           if (count > 0) {
-            console.info("끝~");
+            console.info("The end~");
             if (this.intervalId != null) clearInterval(this.intervalId);
             this.status = TetrisStatus.Finish;
             clearCanvas(this.waitCtx);
@@ -712,7 +713,8 @@
         }
 
         /**
-         * 키보드 다운 이벤트
+         * Keyboard down event.
+         * @param {event} key down event.
          */
         handleKeyDown(event) {
           switch (event.keyCode) {
@@ -748,12 +750,12 @@
             }
           }
         }
-      } // 테스트리스 끝~
+      } // Tetris end~
 
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 터치 이벤트 표시될 화살표 크기
+       * Arrow size to be displayed for touch events.
        */
       const ArrowSize = {
         Begin: 45,
@@ -763,7 +765,7 @@
       Object.freeze(ArrowSize);
 
       /**
-       * 터치 이벤트 표시될 화살표 위치
+       * Arrow position to be displayed for touch events.
        */
       const ArrowDirection = {
         Up: 1,
@@ -774,7 +776,7 @@
       Object.freeze(ArrowDirection);
 
       /**
-       * 터치 이벤트 표시될 화살표 색
+       * Arrow color to be displayed for touch events.
        */
       const ArrowColor = {
         Normal: "rgb(200,0,0)",
@@ -783,7 +785,7 @@
       Object.freeze(ArrowColor);
 
       /**
-       * 화살표 정보
+       * Arrow information.
        */
       class Arrow {
         constructor(x, y, direction) {
@@ -795,27 +797,27 @@
       }
 
       /**
-       * 화살표 목록
+       * Arrow list.
        */
       class Arrows {
         constructor() {
-          // 목록
+          // arrow list
           this.list = [];
-          // 마지막 터치 정보 이벤트 ArrowDirection
+          // Last touch information event. ArrowDirection
           this.lastDirection = null;
         }
 
         /**
-         * 터치 시작
-         * @Param {x} 터치 위치 x
-         * @Param {y} 터치 위치 y
+         * Touch start.
+         * @Param {x} Touch position x
+         * @Param {y} Touch position y
          */
         touchStart(x, y) {
           this.list = [new Arrow(x, y, ArrowDirection.Up), new Arrow(x, y, ArrowDirection.Down), new Arrow(x, y, ArrowDirection.Left), new Arrow(x, y, ArrowDirection.Right)];
         }
 
         /**
-         * 터치 종료
+         * Touch end.
          */
         touchEnd() {
           this.list = [];
@@ -823,9 +825,9 @@
         }
 
         /**
-         * 터치 이동
-         * @Param {x} 터치 이동 위치 x
-         * @Param {y} 터치 이동 위치 y
+         * Touch move.
+         * @Param {x} Touch move position  x
+         * @Param {y} Touch move position  y
          */
         touchMove(x, y) {
           this.list.forEach((arrow) => {
@@ -841,10 +843,11 @@
         }
 
         /**
-         * arrow에 진입 했는지 여부
-         * @param {touchX} 터치 x 좌표
-         * @param {touchY} 터치 y 좌표
+         * Whether it entered the arrow or not
+         * @param {touchX} Touch x-coordinate
+         * @param {touchY} Touch y-coordinate
          * @param {arrow} Arrow
+         * @return true: inside the arrow. false: outside the arrow.
          */
         _isInArrowBounds(touchX, touchY, arrow) {
           const x = arrow.x;
@@ -866,15 +869,18 @@
       // ------------------------------------------------------------------------------------------------------------------------------------------------------- \\
 
       /**
-       * 페이지 최초 로딩.
+       * First-time page load.
        */
       function loadBody() {
-        // 테트리스 인스턴스 생성
+        // Create a Tetris instance
         const tetris = new TetrisManager("canvasBoard", "canvasNext");
+        // Touch arrows
+        tetris.arrows = new Arrows();
+        // Touch Double tap time
+        tetris.tapTime = 0;
 
-        // 키 이벤트 등록
+        // Event registration
         window.addEventListener("keydown", tetris.handleKeyDown);
-
         regButtonClickEvent("btnLeft", tetris.movePieceLeft);
         regButtonClickEvent("btnRight", tetris.movePieceRight);
         regButtonClickEvent("btnDown", tetris.downPiece);
@@ -882,12 +888,7 @@
         regButtonClickEvent("btnBottom", tetris.bottomPiece);
         regButtonClickEvent("btnInit", tetris.init);
 
-        // 터치 화살표
-        tetris.arrows = new Arrows();
-        // 터치 더블 탭 시간
-        tetris.tapTime = 0;
-
-        // canvas의 터치 이벤트 등록(mobile용)
+        // Register touch events in canvas (for mobile)
         const canvas = tetris.canvas;
         canvas.addEventListener("touchstart", handlerTouchStart, false);
         canvas.addEventListener("touchmove", handlerTouchMove, false);
@@ -899,7 +900,7 @@
       }
 
       /**
-       * 버튼 이벤트 등록
+       * Registering Button Events
        * @param {id} element id
        * @param {event} function
        */
@@ -915,17 +916,17 @@
       }
 
       /**
-       * 터치 시작 이벤트
+       * Touch Start Event
        * @param {e} event
        */
       function handlerTouchStart(e) {
-        const canvas = e.originalTarget;
+        const canvas = e.target;
         const tetris = canvas.ownerObject;
 
-        // 더블탭 체크
+        // Double-tap check
         const currentTime = new Date().getTime();
         if (currentTime - tetris.tapTime < 300) {
-          // 300ms 이내에 두 번 탭한 경우를 더블탭으로 간주
+          // Two taps within 300 ms are considered a double tap
           tetris.tapTime = 0; // Reset tap time
           tetris.bottomPiece();
           return;
@@ -934,34 +935,34 @@
         }
 
         const rect = canvas.getBoundingClientRect();
-        const touche = e.touches[0];
-        const x = touche.clientX - rect.left;
-        const y = touche.clientY - rect.top;
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
 
         tetris.arrows.touchStart(x, y);
       }
 
       /**
-       * 터치 이동 이벤트
+       * Touch movement events
        * @param {e} event
        */
       function handlerTouchMove(e) {
-        const canvas = e.originalTarget;
+        const canvas = e.target;
         const tetris = canvas.ownerObject;
         const rect = canvas.getBoundingClientRect();
-        const touche = e.touches[0];
-        const x = touche.clientX - rect.left;
-        const y = touche.clientY - rect.top;
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
 
         tetris.arrows.touchMove(x, y);
       }
 
       /**
-       * 터치 종료 이벤트
+       * Touch end events
        * @param {e} event
        */
       function handlerTouchEnd(e) {
-        const canvas = e.currentTarget;
+        const canvas = e.target;
         const tetris = canvas.ownerObject;
         const arrows = tetris.arrows;
 
@@ -980,17 +981,13 @@
             break;
         }
 
-        // 초기화
         arrows.touchEnd();
       }
 
       /**
-       * 터치 종료 이벤트
+       * Drawing touch arrows
        * @param {ctx} canvas context
-       * @param {x} x
-       * @param {y} y
-       * @param {color} ArrowColor
-       * @param {direction} ArrowDirection
+       * @param {arrow} Arrow
        */
       function drawArrow(ctx, arrow) {
         const x = arrow.x;
@@ -1026,13 +1023,14 @@
       }
 
       /**
-       * 테트리스 블럭 그리기
+       * Draw a Tetris Block
        * @param {ctx} canvas context
-       * @param {x}, {y} 는 보드 위치
-       * @param {pieceItem} 테스트리스 조각 아이템
+       * @param {x} Board location
+       * @param {y} Board location
+       * @param {pieceItem} Testis piece items
        */
       function drawPiece(ctx, x, y, pieceItem) {
-        // canvas에 그릴 좌표로 변환.
+        // Convert to coordinates to draw on the canvas.
         x *= TetrisDefine.PIECE_IMG_SIZE;
         y *= TetrisDefine.PIECE_IMG_SIZE;
 
@@ -1046,10 +1044,11 @@
       }
 
       /**
-       * 블럭 색칠
+       * Draw a block.
        * @param {ctx} canvas context
-       * @param {x, y} 픽셀 위치
-       * @param {color} PieceColor
+       * @param {x} Pixel position
+       * @param {y} Pixel position
+       * @param {color} Piece color
        */
       function drawBlock(ctx, x, y, color) {
         let rgba;
@@ -1088,7 +1087,7 @@
             return;
         }
 
-        // 기본 블랙이나 암것도 없는 것은 걍 칠하고 색이 있는 것은 SquarePyramid 형태로 그린다.
+        // Paint the basic black or nothing, and draw the colored ones in the form of a SquarePyramid.
         if (color == PieceColor.PIECE_BL || color == PieceColor.PIECE_NO) {
           ctx.beginPath();
           ctx.fillStyle = rgba;
@@ -1100,12 +1099,12 @@
       }
 
       /**
-       * 사각 피라미드 모양 만들기
-       * @param ctx canvas context
-       * @param size 모양의 크기
-       * @param x 가로 위치
-       * @param y 세로 위치
-       * @param rgba color
+       * Create a square pyramid shape
+       * @param {ctx} canvas context
+       * @param {size} Shape size
+       * @param {x} x
+       * @param {y} y
+       * @param {rgba} color
        */
       function drawSquarePyramid(ctx, size, x, y, rgba) {
         const half = size / 2;
@@ -1116,10 +1115,10 @@
         const bottomx = topx + size,
           bottomy = topy + size;
 
-        // 컬러 그룹으로 입체감이 느껴지도록 한다.
-        const colorGroup = getColorDarkerGroup(rgba);
+        // Use color groups to create a sense of dimension.
+        const colorGroup = getColorLevelGroup(rgba);
 
-        // 왼쪽
+        // left
         ctx.fillStyle = colorGroup.left;
         ctx.beginPath();
         ctx.moveTo(topx, topy);
@@ -1128,7 +1127,7 @@
         ctx.closePath();
         ctx.fill();
 
-        // 오른쪽
+        // right
         ctx.fillStyle = colorGroup.right;
         ctx.beginPath();
         ctx.moveTo(bottomx, topy);
@@ -1137,7 +1136,7 @@
         ctx.closePath();
         ctx.fill();
 
-        // 위
+        // up
         ctx.fillStyle = colorGroup.top;
         ctx.beginPath();
         ctx.moveTo(topx, topy);
@@ -1146,7 +1145,7 @@
         ctx.closePath();
         ctx.fill();
 
-        // 아래
+        // down
         ctx.fillStyle = colorGroup.bottom;
         ctx.beginPath();
         ctx.moveTo(topx, bottomy);
@@ -1157,29 +1156,34 @@
       }
 
       /**
-       * 각 색상 채널 밝기 조절
+       * Adjust the brightness of each color channel.
+       * @param {r} red
+       * @param {g} green
+       * @param {b} blue
+       * @param {a} alpha
+       * @param {amount}
        */
-      function makeColorDarker(r, g, b, a, amount) {
+      function makeColorLevel(r, g, b, a, amount) {
         const newR = Math.min(255, Math.max(0, r + amount));
         const newG = Math.min(255, Math.max(0, g + amount));
         const newB = Math.min(255, Math.max(0, b + amount));
         const newA = Number.isNaN(a) ? 1.0 : a;
 
-        // 새로운 RGB 값 반환
+        // Return a new RGBA value
         return `rgba(${newR}, ${newG}, ${newB}, ${newA})`;
       }
 
       /**
-       * 조금씩 어두워 지는 컬러 만들기
+       * Creating three-dimensional colors.
+       * @param {rgb} rgb color value.
        */
-      function getColorDarkerGroup(rgb) {
-        // RGB 값 추출
+      function getColorLevelGroup(rgb) {
         const result = new Object();
 
+        // Extract RGB values
         let rgbSlice = rgb.slice(rgb.indexOf("(") + 1, rgb.indexOf(")")).split(",");
         if (!rgbSlice) {
-          console.info(" 올바르지 않은 형식의 RGB 값이면 그대로 반환");
-
+          // If the RGB value is in an incorrect format, return it as is.
           result.left = rgb;
           result.top = rgb;
           result.bottom = rgb;
@@ -1193,25 +1197,25 @@
         const b = parseInt(rgbSlice[2]);
         const a = parseInt(rgbSlice[3]);
 
-        // 왼쪽이 가장 밝고 그 다음 위 아래, 오른쪽이 가장 어둡다.
-        result.left = makeColorDarker(r, g, b, a, 20);
-        result.top = makeColorDarker(r, g, b, a, 0);
-        result.bottom = makeColorDarker(r, g, b, a, -20);
-        result.right = makeColorDarker(r, g, b, a, -40);
+        // The left side is the lightest, followed by the top and bottom, and the right side is the darkest.
+        result.left = makeColorLevel(r, g, b, a, 20);
+        result.top = makeColorLevel(r, g, b, a, 0);
+        result.bottom = makeColorLevel(r, g, b, a, -20);
+        result.right = makeColorLevel(r, g, b, a, -40);
 
         return result;
       }
 
       /**
-       * 그림자 들어간 글자 나타내기
-       * @param ctx canvas context
-       * @param font 폰트 크기 및 모양
-       * @param shadowColor 배경 색
-       * @param txtColor 글자 색
-       * @param msg 내용
-       * @param align 정렬
-       * @param x 가로 위치
-       * @param y 세로 위치
+       * Show shadowed text
+       * @param {ctx} canvas context
+       * @param {font} Font size and shape
+       * @param {shadowColor} Background color.
+       * @param {txtColor} font color
+       * @param {msg} message
+       * @param {align} align
+       * @param {x} x
+       * @param {y} y
        */
       function drawShedowText(ctx, font, shadowColor, txtColor, msg, align, x, y) {
         ctx.font = font;
@@ -1227,7 +1231,8 @@
       }
 
       /**
-       * 캔바스 깨끗!
+       * Clear canvas
+       * @param {ctx} canvas context
        */
       function clearCanvas(ctx) {
         const canvas = ctx.canvas;
@@ -1235,7 +1240,8 @@
       }
 
       /**
-       * 테스트리 보드 그리기
+       * Draw a test board
+       * @param {tetris} tetris instance
        */
       function draw(tetris) {
         const ctx = tetris.ctx;
@@ -1252,26 +1258,26 @@
           return;
         }
 
-        // 테트리스 보드 표시
+        // Show the Tetris board
         for (let y = TetrisDefine.MATRIX_BETWEEN, j = 0; y < TetrisDefine.MATRIX_WORK_Y; y++, j++) {
           for (let x = TetrisDefine.MATRIX_BETWEEN, i = 0; x < TetrisDefine.MATRIX_WORK_X; x++, i++) {
             drawBlock(ctx, i * TetrisDefine.PIECE_IMG_SIZE, j * TetrisDefine.PIECE_IMG_SIZE, tetris.board.Board[y][x]);
           }
         }
 
-        // 게임 조각 표시
+        // drawing pieces
         if (tetris.status == TetrisStatus.Play) {
           drawPiece(ctx, tetris.play.x - TetrisDefine.MATRIX_BETWEEN, tetris.play.y - TetrisDefine.MATRIX_BETWEEN, tetris.playPiece);
-          // 다음 대기 아이템을 그려 준다.
+          // Draw the next waiting item.
           drawPiece(tetris.waitCtx, 0, 0, tetris.waitPiece);
-          // 터치 이벤트 그리기
+          // Drawing touch events
           tetris.arrows.list.forEach((arrow) => drawArrow(ctx, arrow));
         }
 
-        // 점수 표시
+        // drawing point
         drawShedowText(ctx, "14px Arial", "cyan", "cyan", tetris.gamePoint, "right", tetris.canvas.width - 10, 20);
 
-        // 게임 종료 표시
+        // drawing game over.
         if (tetris.status == TetrisStatus.Finish) {
           drawShedowText(ctx, "20px Arial", "white", "white", "The end.", "center", tetris.canvas.width / 2, tetris.canvas.height / 2);
         }
@@ -1284,23 +1290,29 @@
   </head>
   <body onload="loadBody();">
     <canvas id="canvasBoard"></canvas>
-    <canvas id="canvasNext"></canvas>
     <div>
       <table>
         <tr>
-          <td id="btnInit" style="background-color: antiquewhite; text-align: left">Init</td>
-          <td id="btnRotate" style="background-color: coral; text-align: center">Rotate</td>
-          <td></td>
-        </tr>
-        <tr>
-          <td id="btnLeft" style="background-color: coral; text-align: left">Left</td>
-          <td id="btnDown" style="background-color: violet; text-align: center">Down</td>
-          <td id="btnRight" style="background-color: coral; text-align: right">Right</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td id="btnBottom" style="background-color: coral; text-align: center">Bottom</td>
-          <td></td>
+          <td><canvas id="canvasNext"></canvas></td>
+          <td>
+            <table>
+              <tr>
+                <td id="btnInit" style="background-color: antiquewhite; text-align: left; cursor: pointer">Init</td>
+                <td id="btnRotate" style="background-color: coral; text-align: center; cursor: pointer">Rotate</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td id="btnLeft" style="background-color: coral; text-align: left; cursor: pointer">Left</td>
+                <td id="btnDown" style="background-color: violet; text-align: center; cursor: pointer">Down</td>
+                <td id="btnRight" style="background-color: coral; text-align: right; cursor: pointer">Right</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td id="btnBottom" style="background-color: coral; text-align: center; cursor: pointer">Bottom</td>
+                <td></td>
+              </tr>
+            </table>
+          </td>
         </tr>
       </table>
     </div>
