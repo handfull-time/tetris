@@ -1,20 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta charset="utf-8" />
     <meta author="utimezgd@gmail.com" />
     <meta url="https://github.com/handfull-time/tetris" />
-
-    <title>테트리스</title>
+    <title>Tetris</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
   </head>
+
   <body>
-    javascript로 작성한 tetris.
-    <a href='Tetris01.html'>테트리스</a></br>
-    좌우 폭이 정해져 있으며 키보드 및 아래 버튼을 클릭해 조작 할 수 있다.</br>
-    </br>
-    </br>
-    <a href='Tetris02.html'>테트리스</a></br>
-    모바일 기기 터치 이벤트 적용된 테트리스. 좌우 폭이 window.widhth, height에 따라 가변한다.</br>
-    
+    <div class="container mt-5">
+      <h1 class="text-center mb-4">Tetris</h1>
+
+      <div class="card mb-3">
+        <div class="card-header"><a href="Tetris01.html">Version 01</a></div>
+        <div class="card-body">
+          <p>Has a fixed left and right width and can be played using the keyboard and buttons.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><a href="Tetris02.html">Version 02</a></div>
+        <div class="card-body">
+          <p>The left and right width follows the browser window size. Can be played using touch scroll functionality.</p>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
