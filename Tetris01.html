@@ -373,6 +373,7 @@
           this.gameLevel = 0;
           this.status = TetrisStatus.Begin;
           if (this.intervalId != null) clearInterval(this.intervalId);
+          this.intervalCount = 0;
           this.intervalId = null;
         }
 
@@ -628,9 +629,8 @@
             this.gamePoint += 10 * (successCount + (successCount - 1));
 
             if (this.gamePoint / 200 > this.gemeLevel) {
-              // 시간을 더 빠르게 진행 한다.
+              // 레벨을 올린다.
               this.gameLevel++;
-              this.procInterval();
             }
           }
         }
@@ -700,6 +700,10 @@
          */
         moveInterval() {
           if (this.status != TetrisStatus.Play) return;
+
+          if( ++this.intervalCount % 60 == 0 ){
+            this.procInterval();
+          }
 
           this.downPiece();
         }
